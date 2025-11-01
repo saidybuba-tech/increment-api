@@ -1,0 +1,12 @@
+@startuml
+title Linear Client–Server Architecture
+actor Client
+node "Web Server" as WS
+node "Application Server" as AS
+database "Database" as DB
+Client --> WS : HTTP POST /increment {n}
+WS --> AS : Forward request
+AS --> DB : Validate & Persist\n(seen, last_processed, error_log)
+AS --> WS : JSON {result | error}
+WS --> Client : HTTP 200/409 + JSON
+@enduml

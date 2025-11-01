@@ -1,0 +1,24 @@
+@startuml
+title Sequence: POST /increment
+actor Client
+participant "Web Server" as WS
+participant "Application Server" as AS
+database "DB" as DB
+Client -> WS: POST /increment {n}
+WS -> AS: REST call {n}
+AS -> DB: SELECT last_processed,\nEXISTS(seen[n])
+DB --> AS: values
+alt duplicate
+  AS -> DB: INSERT error_log("DUPLICATE")
+  AS --> WS: 409 {"error":"duplicate"}
+  WS --> Client: 409
+else out-of-order -1
+  AS -> DB: INSERT error_log("OUT_OF_ORDER")
+  AS --> WS: 409 {"error":"out_of_order_minus_one"}
+  WS --> Client: 409
+else ok
+  AS -> DB: INSERT seen(n)\nUPDATE state.last_processed=n
+  AS --> WS: 200 {"result": n+1}
+  WS --> Client: 200
+end
+@enduml
